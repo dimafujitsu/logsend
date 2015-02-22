@@ -3,7 +3,7 @@ package logsend
 import (
 	"flag"
 	log "github.com/ezotrank/logger"
-	influxdb "github.com/influxdb/influxdb/client"
+	influxdb "gopkg.in/influxdb/influxdb.v0/client"
 	"strings"
 )
 
