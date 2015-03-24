@@ -30,7 +30,6 @@ func KubernetesReader() {
 		time.Sleep(time.Millisecond * 1000)
 		go getData(cmd, buf)
 	}
-	return
 }
 
 func getData(cmd *cobra.Command, buf *bytes.Buffer) {

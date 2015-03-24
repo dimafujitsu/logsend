@@ -10,7 +10,7 @@ import (
 )
 
 func ProcessStdin() error {
-	rules := make([]*Rule, 0)
+	var rules []*Rule
 	if rawConfig["config"].(flag.Value).String() != "" {
 		groups, err := LoadConfigFromFile(rawConfig["config"].(flag.Value).String())
 		if err != nil {
@@ -22,47 +22,7 @@ func ProcessStdin() error {
 			}
 		}
 	} else {
-		// TODO: move this to separate method
-		if rawConfig["regex"].(flag.Value).String() == "" {
-			Conf.Logger.Fatalln("regex not set")
-		}
-		matchSender := regexp.MustCompile(`(\w+)-host`)
-		var sender Sender
-		for key, val := range rawConfig {
-			match := matchSender.FindStringSubmatch(key)
-			if len(match) == 0 || val.(flag.Value).String() == "" {
-				continue
-			}
-			if register, ok := Conf.registeredSenders[match[1]]; ok {
-				conf := make(map[string]interface{})
-				for key, val := range rawConfig {
-					newKey := key
-					if ok, _ := regexp.MatchString(match[1], key); ok {
-						newKey = strings.Split(key, match[1]+"-")[1]
-					}
-					switch val.(flag.Value).String() {
-					default:
-						conf[newKey] = interface{}(val.(flag.Value).String())
-					case "true", "false":
-						b, err := strconv.ParseBool(val.(flag.Value).String())
-						if err != nil {
-							Conf.Logger.Fatalln(err)
-						}
-						conf[newKey] = interface{}(b)
-					}
-				}
-				register.Init(conf)
-				sender = register.get()
-				sender.SetConfig(conf)
-				break
-			}
-		}
-		rule, err := NewRule(rawConfig["regex"].(flag.Value).String())
-		if err != nil {
-			panic(err)
-		}
-		rule.senders = []Sender{sender}
-		rules = append(rules, rule)
+		rules = ruleFromFile()
 	}
 
 	reader := bufio.NewReader(os.Stdin)
@@ -75,4 +35,49 @@ func ProcessStdin() error {
 		checkLineRules(&line, rules)
 	}
 	return nil
+}
+
+func ruleFromFile() []*Rule {
+	var rules []*Rule
+	if rawConfig["regex"].(flag.Value).String() == "" {
+		Conf.Logger.Fatalln("regex not set")
+	}
+	matchSender := regexp.MustCompile(`(\w+)-host`)
+	var sender Sender
+	for key, val := range rawConfig {
+		match := matchSender.FindStringSubmatch(key)
+		if len(match) == 0 || val.(flag.Value).String() == "" {
+			continue
+		}
+		if register, ok := Conf.registeredSenders[match[1]]; ok {
+			conf := make(map[string]interface{})
+			for key, val := range rawConfig {
+				newKey := key
+				if ok, _ := regexp.MatchString(match[1], key); ok {
+					newKey = strings.Split(key, match[1]+"-")[1]
+				}
+				switch val.(flag.Value).String() {
+				default:
+					conf[newKey] = interface{}(val.(flag.Value).String())
+				case "true", "false":
+					b, err := strconv.ParseBool(val.(flag.Value).String())
+					if err != nil {
+						Conf.Logger.Fatalln(err)
+					}
+					conf[newKey] = interface{}(b)
+				}
+			}
+			register.Init(conf)
+			sender = register.get()
+			sender.SetConfig(conf)
+			break
+		}
+	}
+	rule, err := NewRule(rawConfig["regex"].(flag.Value).String())
+	if err != nil {
+		panic(err)
+	}
+	rule.senders = []Sender{sender}
+	rules = append(rules, rule)
+	return rules
 }
