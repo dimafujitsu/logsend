@@ -1,0 +1,14 @@
+{
+  "influxdb": {
+    "host": "localhost:4444",
+    "user": "root",
+    "password": "root",
+    "database": "logers",
+    "udp": true,
+    "send_buffer": 1
+  },
+  "groups": [{
+    "mask": "test.log",
+    "rules": []
+  }]
+}

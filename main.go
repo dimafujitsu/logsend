@@ -1,9 +1,9 @@
 package main
 
 import (
+	"./logsend"
 	"flag"
 	"fmt"
-	"github.com/ezotrank/logsend/logsend"
 	logpkg "log"
 	"os"
 )
@@ -26,6 +26,7 @@ var (
 	readOnce      = flag.Bool("read-once", false, "read logs once and exit")
 	regex         = flag.String("regex", "", "regex rule")
 	version       = flag.Bool("version", false, "show version number")
+	kubernetes    = flag.Bool("kubernetes", false, "use kubernetes api as input")
 )
 
 func main() {
@@ -68,18 +69,18 @@ func main() {
 		panic(err)
 	}
 
-	logDirs := make([]string, 0)
-	if len(flag.Args()) > 0 {
-		logDirs = flag.Args()
+	if *kubernetes {
+		logsend.KubernetesReader()
 	} else {
-		logDirs = append(logDirs, *watchDir)
-	}
-
-	if fi.Mode()&os.ModeNamedPipe == 0 {
-		logsend.WatchFiles(logDirs, *config)
-	} else {
-		flag.VisitAll(logsend.LoadRawConfig)
-		logsend.ProcessStdin()
+		if fi.Mode()&os.ModeNamedPipe == 0 {
+			if len(flag.Args()) < 1 {
+				fmt.Errorf("you forget specify watch directories")
+			}
+			logsend.WatchFiles(flag.Args(), *config)
+		} else {
+			flag.VisitAll(logsend.LoadRawConfig)
+			logsend.ProcessStdin()
+		}
 	}
 	os.Exit(0)
 }

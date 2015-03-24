@@ -34,7 +34,7 @@ func WatchFiles(dirs []string, configFile string) {
 	}
 
 	// get list of all files in watch dir
-	files := make([]string, 0)
+	var files []string
 	for _, dir := range dirs {
 		fs, err := walkLogDir(dir)
 		if err != nil {
@@ -96,7 +96,7 @@ func assignFiles(files []string, groups []*Group) (outFiles []*File, err error) 
 }
 
 func getFilesByGroup(allFiles []string, group *Group) ([]*File, error) {
-	files := make([]*File, 0)
+	var files []*File
 	regex := *group.Mask
 	for _, f := range allFiles {
 		if !regex.MatchString(filepath.Base(f)) {
@@ -126,7 +126,7 @@ func continueWatch(dir *string, groups []*Group) {
 			select {
 			case ev := <-watcher.Event:
 				if ev.IsCreate() {
-					files := make([]string, 0)
+					var files []string
 					file, err := filepath.Abs(ev.Name)
 					if err != nil {
 						Conf.Logger.Printf("can't get file %+v", err)
@@ -179,18 +179,5 @@ func (self *File) tail() {
 	defer func() { self.doneCh <- self.Tail.Filename }()
 	for line := range self.Tail.Lines {
 		checkLineRules(&line.Text, self.group.Rules)
-	}
-}
-
-func checkLineRule(line *string, rule *Rule) {
-	match := rule.Match(line)
-	if match != nil {
-		rule.send(match)
-	}
-}
-
-func checkLineRules(line *string, rules []*Rule) {
-	for _, rule := range rules {
-		checkLineRule(line, rule)
 	}
 }

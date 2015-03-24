@@ -55,3 +55,16 @@ func (rule *Rule) send(data interface{}) {
 		sender.Send(data)
 	}
 }
+
+func checkLineRule(line *string, rule *Rule) {
+	match := rule.Match(line)
+	if match != nil {
+		rule.send(match)
+	}
+}
+
+func checkLineRules(line *string, rules []*Rule) {
+	for _, rule := range rules {
+		checkLineRule(line, rule)
+	}
+}
