@@ -3,6 +3,7 @@ package logsend
 import (
 	"bufio"
 	"flag"
+	"fmt"
 	"os"
 	"regexp"
 	"strconv"
@@ -10,21 +11,7 @@ import (
 )
 
 func ProcessStdin() error {
-	var rules []*Rule
-	if rawConfig["config"].(flag.Value).String() != "" {
-		groups, err := LoadConfigFromFile(rawConfig["config"].(flag.Value).String())
-		if err != nil {
-			Conf.Logger.Fatalf("can't load config %+v", err)
-		}
-		for _, group := range groups {
-			for _, rule := range group.Rules {
-				rules = append(rules, rule)
-			}
-		}
-	} else {
-		rules = ruleFromFile()
-	}
-
+	rules := RuleLoad()
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		line, err := reader.ReadString('\n')
@@ -37,10 +24,31 @@ func ProcessStdin() error {
 	return nil
 }
 
+func RuleLoad() []*Rule {
+	var rules []*Rule
+	fmt.Printf("Test: %+v\n", rawConfig)
+	if rawConfig["config"] != nil && rawConfig["config"].(flag.Value).String() != "" {
+		testv := rawConfig["config"].(flag.Value).String()
+		groups, err := LoadConfigFromFile(testv)
+		if err != nil {
+			Conf.Logger.Fatalf("can't load config %+v", err)
+		}
+		for _, group := range groups {
+			for _, rule := range group.Rules {
+				rules = append(rules, rule)
+			}
+		}
+	} else {
+		rules = ruleFromFile()
+	}
+	return rules
+}
+
 func ruleFromFile() []*Rule {
 	var rules []*Rule
-	if rawConfig["regex"].(flag.Value).String() == "" {
-		Conf.Logger.Fatalln("regex not set")
+	if rawConfig["regex"] == nil || rawConfig["regex"].(flag.Value).String() == "" {
+		//Conf.Logger.Fatalln("regex not set")
+		return rules
 	}
 	matchSender := regexp.MustCompile(`(\w+)-host`)
 	var sender Sender

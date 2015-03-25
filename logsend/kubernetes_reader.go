@@ -3,7 +3,6 @@ package logsend
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/client/clientcmd"
 	"github.com/GoogleCloudPlatform/kubernetes/pkg/kubectl/cmd"
 	"github.com/spf13/cobra"
@@ -26,15 +25,15 @@ func KubernetesReader() {
 	buf := bytes.NewBuffer([]byte{})
 	cmd := f.NewCmdGet(buf)
 	cmd.SetOutput(buf)
+	rules := RuleLoad()
 	for {
 		time.Sleep(time.Millisecond * 1000)
-		go getData(cmd, buf)
+		go getData(cmd, buf, rules)
 	}
 }
 
-func getData(cmd *cobra.Command, buf *bytes.Buffer) {
+func getData(cmd *cobra.Command, buf *bytes.Buffer, rules []*Rule) {
 	cmd.Run(cmd, []string{"pods"})
-	fmt.Printf("RESULT: %s\n", buf)
 	reader := bufio.NewReader(buf)
 	for {
 		line, err := reader.ReadString('\n')
@@ -42,6 +41,6 @@ func getData(cmd *cobra.Command, buf *bytes.Buffer) {
 		if err != nil {
 			break
 		}
-		fmt.Printf("res %s\n", line)
+		checkLineRules(&line, rules)
 	}
 }

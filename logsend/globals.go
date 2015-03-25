@@ -7,6 +7,7 @@ import (
 	"strconv"
 )
 
+// RegisterNewSender register new sender
 func RegisterNewSender(name string, init func(interface{}), get func() Sender) {
 	sender := &SenderRegister{
 		init: init,
@@ -17,17 +18,20 @@ func RegisterNewSender(name string, init func(interface{}), get func() Sender) {
 	return
 }
 
+// SenderRegister struct definition
 type SenderRegister struct {
 	init        func(interface{})
 	get         func() Sender
 	initialized bool
 }
 
-func (self *SenderRegister) Init(val interface{}) {
-	self.init(val)
-	self.initialized = true
+// Init definition
+func (reg *SenderRegister) Init(val interface{}) {
+	reg.init(val)
+	reg.initialized = true
 }
 
+// Configuration with defined structure
 type Configuration struct {
 	WatchDir          string
 	ContinueWatch     bool
@@ -43,6 +47,7 @@ type Configuration struct {
 	registeredSenders map[string]*SenderRegister
 }
 
+// Conf definition
 var Conf = &Configuration{
 	WatchDir:          "",
 	Memprofile:        "",
