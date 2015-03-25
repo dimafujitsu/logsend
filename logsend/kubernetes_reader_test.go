@@ -9,6 +9,15 @@ import (
 	"time"
 )
 
+func TestRest(t *testing.T) {
+	var result string
+	sender := &RestapiSender{}
+	result = sender.Name()
+	if result != "restapi" {
+		t.Error("Failure!!")
+	}
+}
+
 func TestKube(t *testing.T) {
 	orig := os.Stdout
 	r, w, _ := os.Pipe()
